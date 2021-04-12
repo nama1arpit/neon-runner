@@ -152,6 +152,55 @@ def pause():
         pygame.display.update()
         clock.tick(60)
 
+def lose():
+    running = True
+    menu_background = pygame.image.load('data/images/finish_menu.png')
+    restart_option = pygame.image.load('data/images/restart_finish.png')
+    quit_option = pygame.image.load('data/images/quit_finish.png')
+    finish_arrow = pygame.image.load('data/images/finish_arrow.png')
+    finish_msg = pygame.image.load('data/images/finish_msg.png')
+    arrow_position = 0
+
+    menu_arrow_sound = pygame.mixer.Sound("data/audio/menu_arrow.wav")
+
+    while running:
+        display.blit(menu_background, (0,0))
+        
+        display.blit(finish_msg, (200, 50))
+        display.blit(restart_option, (235, 170))
+        display.blit(quit_option, (270, 230))
+
+        arrow_x_pad = 30 if arrow_position in [0] else 0
+        display.blit(finish_arrow, (220 - arrow_x_pad, 170 + arrow_position*60))
+
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == KEYDOWN:
+                if event.key == K_DOWN:
+                    if arrow_position != 1:
+                        arrow_position += 1
+                        menu_arrow_sound.play()
+                if event.key == K_UP:
+                    if arrow_position != 0:
+                        arrow_position -= 1
+                        menu_arrow_sound.play()
+                if event.key == K_RETURN:
+                    if arrow_position == 1:
+                        pygame.quit()
+                        sys.exit()
+                    elif arrow_position == 0:
+                        running = False
+                        return 1
+            if event.type == KEYUP:
+                pass
+        
+        surf = pygame.transform.scale(display, WINDOW_SIZE)
+        screen.blit(surf, (0,0))
+        pygame.display.update()
+        clock.tick(60)
+
 
 def gameplay(display, init_player_x = 100, init_player_y = 100):
     
@@ -265,16 +314,14 @@ def gameplay(display, init_player_x = 100, init_player_y = 100):
             player_health -= 1
             
             if player_health <= 0:
-                pygame.quit()
-                sys.exit()
+                return 2
         elif true_scroll[1] > 200 and no_hurt_timer == 0:
             no_hurt_timer = 10
             hurt = True
             hurt_sound.play(loops=3, fade_ms=5)
             player_health -= 2
             if player_health <= 0:
-                pygame.quit()
-                sys.exit()
+                return 2
         elif no_hurt_timer == 0:
             hurt = False
         
@@ -375,6 +422,8 @@ pygame.mixer.music.play(-1)
 
 while True:
     return_val = gameplay(display)
+    if return_val == 2:
+        return_val = lose()
     if return_val != 1:
         break
 
