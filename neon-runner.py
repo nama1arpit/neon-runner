@@ -39,13 +39,13 @@ def generate_chunk(x, y):
     return chunk_data
 
 def load_map(path):
-    f = open(path + '.txt','r')
+    f = open(path + '.csv','r')
     data = f.read()
     f.close()
     data = data.split('\n')
     game_map = []
     for row in data:
-        game_map.append(list(row))
+        game_map.append(row.split(','))
     return game_map
 
 def menu():
@@ -249,7 +249,18 @@ def win(coins_collected):
         pygame.display.update()
         clock.tick(60)
 
-def gameplay(display, init_player_x = 100, init_player_y = 500):
+def get_coordinates_from_map(game_map, tile_id, tile_size):
+    
+    coord_list = []
+    for y, row in enumerate(game_map):
+        for x, tile_code in enumerate(row):
+            if int(tile_code) == tile_id:  
+                coord_list.append((x*tile_size, y*tile_size))
+
+    return coord_list
+
+
+def gameplay(display, init_player_x = 100, init_player_y = 400):
     
 
     moving_right = False
@@ -265,6 +276,7 @@ def gameplay(display, init_player_x = 100, init_player_y = 500):
     coins_collected = 0
     bolts_collected = 0
 
+    screen_shake = 0
     true_scroll = [0,0]
 
     blue_tile_0 = pygame.image.load("data/images/blue_tile_0.png")
@@ -273,7 +285,7 @@ def gameplay(display, init_player_x = 100, init_player_y = 500):
     blue_tile_4 = pygame.image.load("data/images/blue_tile_4.png")
 
     TILE_SIZE = blue_tile_0.get_width()
-    TILE_SIZE = TILE_SIZE*2//3
+    TILE_SIZE = TILE_SIZE*6//10
 
     h_bar_image = pygame.image.load("data/images/blue_tile_3.png")
     h_bar_image = pygame.transform.scale(h_bar_image, (TILE_SIZE, TILE_SIZE))
@@ -282,13 +294,17 @@ def gameplay(display, init_player_x = 100, init_player_y = 500):
 
     blue_coin_count = pygame.image.load("data/images/blue_coin_count.png")
     blue_coin_count = pygame.transform.scale(blue_coin_count, (TILE_SIZE, TILE_SIZE))
-    
 
+    blue_bolt_count = pygame.image.load("data/images/bolt_count.png")
+    blue_bolt_count = pygame.transform.scale(blue_bolt_count, (TILE_SIZE, TILE_SIZE))
+    
     tile_index = {
-        0:blue_tile_0,
-        1:blue_tile_1,
-        2:blue_tile_2,
-        4:blue_tile_4
+        0: blue_tile_0,
+        1: blue_tile_1,
+        2: blue_tile_2,
+        4: blue_tile_4,
+        7: pygame.image.load("data/images/entities/blue_coin/idle/idle_0.png"),
+        8: pygame.image.load("data/images/entities/blue_bolt/idle/idle_0.png")
     }
 
     for tile in tile_index.keys():
@@ -301,7 +317,7 @@ def gameplay(display, init_player_x = 100, init_player_y = 500):
     jump_sound.set_volume(0.5)
     hurt_sound.set_volume(0.3)
 
-    game_map = load_map('data/maps/02')
+    game_map = load_map('data/maps/level1')
     e.load_animations('data/images/entities/')
 
     player = e.entity(init_player_x, init_player_y, 32, 32, 'player')
@@ -314,16 +330,19 @@ def gameplay(display, init_player_x = 100, init_player_y = 500):
         'hurt': True,
         'no_hurt_timer': 0,
         'health': 5,
-        'hurt_sound': pygame.mixer.Sound('data/audio/villain_hurt.wav')
+        'hurt_sound': pygame.mixer.Sound('data/audio/villain_hurt.wav'),
+        'dash_move': 0
     }
 
     anti_blue_coords = [(450,200), (800,200), (1000,250)]
-    anti_blue_list = [e.entity(x[0], x[1], 51, 58, 'anti_blue') for x in anti_blue_coords]
+    # anti_blue_list = [e.entity(x[0], x[1], 51, 58, 'anti_blue') for x in anti_blue_coords]
+    anti_blue_list = []
 
-    blue_coin_coords = [(1400, 350)]
+    blue_coin_coords = get_coordinates_from_map(game_map, 7, TILE_SIZE) #[(1400, 350)]
+    print(blue_coin_coords)
     blue_coin_list = [e.entity(x[0], x[1], 51, 58, 'blue_coin') for x in blue_coin_coords]
 
-    blue_bolt_coords = [(400, 600), (600, 650)]
+    blue_bolt_coords = get_coordinates_from_map(game_map, 8, TILE_SIZE) #[(300, 400), (600, 650)]
     blue_bolt_list = [e.entity(x[0], x[1], 32, 32, 'blue_bolt') for x in blue_bolt_coords]
 
     running = True
@@ -338,14 +357,22 @@ def gameplay(display, init_player_x = 100, init_player_y = 500):
         scroll[0] = int(scroll[0])
         scroll[1] = int(scroll[1])
 
+        if screen_shake > 0:
+            screen_shake -= 1
+
+        if screen_shake:
+            scroll[0] += random.randint(0,8) - 4
+            scroll[1] += random.randint(0,8) - 4
+        
+
         tile_rects = []
 
         for y, row in enumerate(game_map):
             for x, tile_code in enumerate(row):
-                if int(tile_code) not in [1, 3, 4]:
+                if int(tile_code) not in [-1, 1, 4, 7, 8]:
                     display.blit(tile_index[int(tile_code)], (x*TILE_SIZE - scroll[0],y*TILE_SIZE - scroll[1]))
                     tile_rects.append(pygame.Rect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE))
-                if int(tile_code) not in [3]:
+                if int(tile_code) not in [-1, 7, 8]:
                     display.blit(tile_index[int(tile_code)], (x*TILE_SIZE - scroll[0],y*TILE_SIZE - scroll[1]))
 
         for h_bar in range(player_health):
@@ -353,8 +380,11 @@ def gameplay(display, init_player_x = 100, init_player_y = 500):
         for h_bar in range(villain['health']):
             display.blit(villain_h_bar_image, (500 + 23*h_bar, 10))
 
-        display.blit(blue_coin_count, (250, 10))
-        display.blit(small_font.render(f'x {coins_collected}', False, (1,146,240)), (290, 25))
+        display.blit(blue_coin_count, (200, 10))
+        display.blit(small_font.render(f'x {coins_collected}', False, (1,146,240)), (240, 25))
+
+        display.blit(blue_bolt_count, (300, 10))
+        display.blit(small_font.render(f'x {bolts_collected}', False, (1,146,240)), (340, 25))
 
         # Setting speed according to key presses
         player_movement = [0,0]
@@ -373,13 +403,12 @@ def gameplay(display, init_player_x = 100, init_player_y = 500):
         villain['dash_timer'] += 0.1
         villain['no_hurt_timer'] -=0.2
 
-        
-
         if villain["dash_timer"] < 1:
             if villain['entity'].x > player.x + 2:
                 villain['move_direction'] = 'left'
             else:
                 villain['move_direction'] = 'right'
+            villain['dash_move'] = abs(villain['entity'].x - player.x - 2)
 
         if villain["move_direction"] == 'left':
             if villain['dash_timer'] > 10:
@@ -387,12 +416,11 @@ def gameplay(display, init_player_x = 100, init_player_y = 500):
                 villain["dash_timer"] = 0
 
             elif villain['dash_timer'] > 8:
-                villain['movement'][0] = -15
-            
+                villain['movement'][0] = -18 #speed
             elif villain['dash_timer'] > 6:
                 villain['movement'][0] = -3
             
-            elif villain['dash_timer'] > 4:
+            elif villain['dash_timer'] > 3:
                 villain['movement'][0] = 0
 
         if villain["move_direction"] == 'right':
@@ -401,12 +429,12 @@ def gameplay(display, init_player_x = 100, init_player_y = 500):
                 villain["dash_timer"] = 0
 
             elif villain['dash_timer'] > 8:
-                villain['movement'][0] = 15
+                villain['movement'][0] = 18
             
             elif villain['dash_timer'] > 6:
                 villain['movement'][0] = 3
             
-            elif villain['dash_timer'] > 4:
+            elif villain['dash_timer'] > 3:
                 villain['movement'][0] = 0
         
         villain['movement'][1] += villain['y_momentum']
@@ -538,6 +566,7 @@ def gameplay(display, init_player_x = 100, init_player_y = 500):
         for x in anti_blue_list:
             x.change_frame(1)
             x.display(display, scroll)
+            pass
 
         for x in blue_coin_list:
             x.change_frame(1)
@@ -566,6 +595,7 @@ def gameplay(display, init_player_x = 100, init_player_y = 500):
                         moving_fast = True
                         dash_timer = 15
                         bolts_collected -= 1
+                        screen_shake = 150
                 if event.key == K_ESCAPE:
                     pygame.mixer.music.set_volume(0.3)
                     pause_ret = pause()
@@ -586,7 +616,6 @@ def gameplay(display, init_player_x = 100, init_player_y = 500):
 
         pygame.display.update()
         clock.tick(60)
-        print(dash_timer, bolts_collected, moving_fast)
 
 menu()
 
