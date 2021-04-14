@@ -5,5 +5,7 @@ player/dash/ 3;3;3 loop
 anti_blue/idle/ 10;10 loop
 blue_coin/idle/ 10;10 loop
 blue_coin/active/ 10 loop
+blue_bolt/idle/ 10 loop
+blue_bolt/active/ 10 loop
 villain/idle/ 20;20 loop
 villain/hurt/ 5;10 loop

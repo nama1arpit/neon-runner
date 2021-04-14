@@ -258,10 +258,12 @@ def gameplay(display, init_player_x = 100, init_player_y = 500):
     dash_timer = 0
     player_y_momentum = 0
     air_timer = 0
+    dash_timer = 0
     hurt = False
     no_hurt_timer = 0
-    player_health = 2
+    player_health = 5
     coins_collected = 0
+    bolts_collected = 0
 
     true_scroll = [0,0]
 
@@ -280,6 +282,7 @@ def gameplay(display, init_player_x = 100, init_player_y = 500):
 
     blue_coin_count = pygame.image.load("data/images/blue_coin_count.png")
     blue_coin_count = pygame.transform.scale(blue_coin_count, (TILE_SIZE, TILE_SIZE))
+    
 
     tile_index = {
         0:blue_tile_0,
@@ -319,6 +322,9 @@ def gameplay(display, init_player_x = 100, init_player_y = 500):
 
     blue_coin_coords = [(1400, 350)]
     blue_coin_list = [e.entity(x[0], x[1], 51, 58, 'blue_coin') for x in blue_coin_coords]
+
+    blue_bolt_coords = [(400, 600), (600, 650)]
+    blue_bolt_list = [e.entity(x[0], x[1], 32, 32, 'blue_bolt') for x in blue_bolt_coords]
 
     running = True
     while running:
@@ -363,8 +369,11 @@ def gameplay(display, init_player_x = 100, init_player_y = 500):
         player_y_momentum += 0.2
         no_hurt_timer -= 0.2
 
+        dash_timer -= 0.1
         villain['dash_timer'] += 0.1
         villain['no_hurt_timer'] -=0.2
+
+        
 
         if villain["dash_timer"] < 1:
             if villain['entity'].x > player.x + 2:
@@ -373,31 +382,31 @@ def gameplay(display, init_player_x = 100, init_player_y = 500):
                 villain['move_direction'] = 'right'
 
         if villain["move_direction"] == 'left':
-            if villain['dash_timer'] > 15:
+            if villain['dash_timer'] > 10:
                 villain['movement'][0] = 0
                 villain["dash_timer"] = 0
 
-            elif villain['dash_timer'] > 10:
-                villain['movement'][0] = -10
+            elif villain['dash_timer'] > 8:
+                villain['movement'][0] = -15
             
-            elif villain['dash_timer'] > 7:
+            elif villain['dash_timer'] > 6:
                 villain['movement'][0] = -3
             
-            elif villain['dash_timer'] > 5:
+            elif villain['dash_timer'] > 4:
                 villain['movement'][0] = 0
 
         if villain["move_direction"] == 'right':
-            if villain['dash_timer'] > 15:
+            if villain['dash_timer'] > 10:
                 villain['movement'][0] = 0
                 villain["dash_timer"] = 0
 
-            elif villain['dash_timer'] > 10:
-                villain['movement'][0] = 10
+            elif villain['dash_timer'] > 8:
+                villain['movement'][0] = 15
             
-            elif villain['dash_timer'] > 7:
+            elif villain['dash_timer'] > 6:
                 villain['movement'][0] = 3
             
-            elif villain['dash_timer'] > 5:
+            elif villain['dash_timer'] > 4:
                 villain['movement'][0] = 0
         
         villain['movement'][1] += villain['y_momentum']
@@ -418,6 +427,10 @@ def gameplay(display, init_player_x = 100, init_player_y = 500):
 
         if no_hurt_timer < 0:
             no_hurt_timer = 0
+        if dash_timer < 0:
+            dash_timer = 0
+        if dash_timer == 0:
+            moving_fast = False
         if player_y_momentum > 5:
             player_y_momentum = 5
         if e.collision_test(player, [x.rect() for x in anti_blue_list]) and no_hurt_timer == 0:
@@ -475,6 +488,12 @@ def gameplay(display, init_player_x = 100, init_player_y = 500):
                 coin.set_action('active')
                 coins_collected += 1
 
+        for bolt in blue_bolt_list:
+            if e.collision_test(player, [bolt.rect()]) and bolt.action == 'idle':
+                pickup_sound.play()
+                bolt.set_action('active')
+                bolts_collected += 1
+
         if hurt and player_movement[0] > 0:
             player.set_action('hurt')
             player.set_flip(False)
@@ -524,6 +543,10 @@ def gameplay(display, init_player_x = 100, init_player_y = 500):
             x.change_frame(1)
             x.display(display, scroll)
 
+        for x in blue_bolt_list:
+            x.change_frame(1)
+            x.display(display, scroll)
+
         for event in pygame.event.get():
             if event.type == QUIT:
                 pygame.quit()
@@ -538,8 +561,11 @@ def gameplay(display, init_player_x = 100, init_player_y = 500):
                     if air_timer < 6:
                         player_y_momentum = -6
                         jump_sound.play()
-                if event.key == K_LSHIFT:
-                    moving_fast = True
+                if event.key == K_LSHIFT and dash_timer == 0:
+                    if bolts_collected > 0:
+                        moving_fast = True
+                        dash_timer = 15
+                        bolts_collected -= 1
                 if event.key == K_ESCAPE:
                     pygame.mixer.music.set_volume(0.3)
                     pause_ret = pause()
@@ -553,8 +579,6 @@ def gameplay(display, init_player_x = 100, init_player_y = 500):
                     moving_right = False
                 if event.key == K_LEFT:
                     moving_left = False
-                if event.key == K_LSHIFT:
-                    moving_fast = False
 
         surf = pygame.transform.scale(display, WINDOW_SIZE)
         screen.blit(surf, (0,0))
@@ -562,6 +586,7 @@ def gameplay(display, init_player_x = 100, init_player_y = 500):
 
         pygame.display.update()
         clock.tick(60)
+        print(dash_timer, bolts_collected, moving_fast)
 
 menu()
 
