@@ -4,7 +4,7 @@ A neon styled retro platformer game made completely with pygame.
 ## Gameplay
 
 <video width="320" height="240" controls>
-  <source src="" type="video/mp4">
+  <source src="https://github.com/nama1arpit/neon-runner/blob/main/gameplay_videos/boss-test1-gameplay.mp4" type="video/mp4">
 </video>
 
 ## Credits
