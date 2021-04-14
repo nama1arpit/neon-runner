@@ -9,6 +9,10 @@ e.set_global_colorkey((0,0,0))
 clock = pygame.time.Clock()
 pygame.display.set_caption("Neon-Runner")
 
+title_font = pygame.font.Font("data/font/Hippauf-G01O.ttf", 40)
+subtitle_font = pygame.font.Font("data/font/Hippauf-G01O.ttf", 25)
+small_font = pygame.font.Font("data/font/Hippauf-G01O.ttf", 20)
+
 WINDOW_SIZE = (1200, 800)
 screen = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
 display = pygame.Surface((600, 400))
@@ -63,10 +67,9 @@ def menu():
         
         display.blit(menu_background, (0,0))
         
-        display.blit(game_name, (170, 50))
-        display.blit(start_option, (260, 170))
-        display.blit(quit_option, (270, 230))
-
+        display.blit(title_font.render("Neon Runner", 0, (39, 13, 52)), (160,50))
+        display.blit(subtitle_font.render("start", 0, (134, 40, 107)), (265, 170))
+        display.blit(subtitle_font.render("quit", 0, (134, 40, 107)), (275, 230))
         display.blit(menu_arrow, (220, 170 + arrow_position*60))
 
         for event in pygame.event.get():
@@ -101,10 +104,6 @@ def menu():
 def pause():
     running = True
     pause_menu_background = pygame.image.load('data/images/pause_menu_background.png')
-    game_name = pygame.image.load('data/images/neon_runner_pause.png')
-    continue_pause = pygame.image.load('data/images/continue_pause.png')
-    quit_pause = pygame.image.load('data/images/quit_pause.png')
-    restart_option = pygame.image.load('data/images/restart_option.png')
     pause_menu_arrow = pygame.image.load('data/images/pause_arrow.png')
     arrow_position = 0
 
@@ -113,10 +112,10 @@ def pause():
     while running:
         display.blit(pause_menu_background, (0,0))
         
-        display.blit(game_name, (170, 50))
-        display.blit(continue_pause, (230, 170))
-        display.blit(restart_option, (235, 230))
-        display.blit(quit_pause, (270, 290))
+        display.blit(title_font.render("Neon Runner", 0, (1,0,246)), (160, 50))
+        display.blit(subtitle_font.render("continue", 0, (0,147,240)), (235, 170))
+        display.blit(subtitle_font.render("restart", 0, (0,147,240)), (245, 230))
+        display.blit(subtitle_font.render("quit", 0, (0,147,240)), (270, 290))
 
         arrow_x_pad = 30 if arrow_position in [0,1] else 0
         display.blit(pause_menu_arrow, (220 - arrow_x_pad, 170 + arrow_position*60))
@@ -152,26 +151,26 @@ def pause():
         pygame.display.update()
         clock.tick(60)
 
-def lose():
+def lose(coins_collected):
     running = True
     menu_background = pygame.image.load('data/images/finish_menu.png')
-    restart_option = pygame.image.load('data/images/restart_finish.png')
-    quit_option = pygame.image.load('data/images/quit_finish.png')
     finish_arrow = pygame.image.load('data/images/finish_arrow.png')
-    finish_msg = pygame.image.load('data/images/finish_msg.png')
     arrow_position = 0
 
     menu_arrow_sound = pygame.mixer.Sound("data/audio/menu_arrow.wav")
 
+    score = coins_collected*20
+
     while running:
         display.blit(menu_background, (0,0))
         
-        display.blit(finish_msg, (200, 50))
-        display.blit(restart_option, (235, 170))
-        display.blit(quit_option, (270, 230))
+        display.blit(title_font.render("You Lost!", 0, (172,21,68)), (190, 50))
+        display.blit(subtitle_font.render(f"score: {score}", 0, (210,34,70)), (230, 170))
+        display.blit(subtitle_font.render("restart", 0, (210,34,70)), (245, 230))
+        display.blit(subtitle_font.render("quit", 0, (210,34,70)), (270, 290))
 
         arrow_x_pad = 30 if arrow_position in [0] else 0
-        display.blit(finish_arrow, (220 - arrow_x_pad, 170 + arrow_position*60))
+        display.blit(finish_arrow, (220 - arrow_x_pad, 230 + arrow_position*60))
 
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -201,8 +200,56 @@ def lose():
         pygame.display.update()
         clock.tick(60)
 
+def win(coins_collected):
+    running = True
+    menu_background = pygame.image.load('data/images/finish_menu.png')
+    finish_arrow = pygame.image.load('data/images/finish_arrow.png')
+    arrow_position = 0
 
-def gameplay(display, init_player_x = 100, init_player_y = 100):
+    menu_arrow_sound = pygame.mixer.Sound("data/audio/menu_arrow.wav")
+
+    score = coins_collected*20
+
+    while running:
+        display.blit(menu_background, (0,0))
+        
+        display.blit(title_font.render("You Won!", 0, (172,21,68)), (190, 50))
+        display.blit(subtitle_font.render(f"score: {score}", 0, (210,34,70)), (230, 170))
+        display.blit(subtitle_font.render("restart", 0, (210,34,70)), (245, 230))
+        display.blit(subtitle_font.render("quit", 0, (210,34,70)), (270, 290))
+
+        arrow_x_pad = 30 if arrow_position in [0] else 0
+        display.blit(finish_arrow, (220 - arrow_x_pad, 230 + arrow_position*60))
+
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == KEYDOWN:
+                if event.key == K_DOWN:
+                    if arrow_position != 1:
+                        arrow_position += 1
+                        menu_arrow_sound.play()
+                if event.key == K_UP:
+                    if arrow_position != 0:
+                        arrow_position -= 1
+                        menu_arrow_sound.play()
+                if event.key == K_RETURN:
+                    if arrow_position == 1:
+                        pygame.quit()
+                        sys.exit()
+                    elif arrow_position == 0:
+                        running = False
+                        return 1
+            if event.type == KEYUP:
+                pass
+        
+        surf = pygame.transform.scale(display, WINDOW_SIZE)
+        screen.blit(surf, (0,0))
+        pygame.display.update()
+        clock.tick(60)
+
+def gameplay(display, init_player_x = 100, init_player_y = 500):
     
 
     moving_right = False
@@ -213,13 +260,10 @@ def gameplay(display, init_player_x = 100, init_player_y = 100):
     air_timer = 0
     hurt = False
     no_hurt_timer = 0
-    player_health = 5
+    player_health = 2
     coins_collected = 0
 
     true_scroll = [0,0]
-
-    my_font = pygame.font.SysFont('Comic Sans MS', 30)
-
 
     blue_tile_0 = pygame.image.load("data/images/blue_tile_0.png")
     blue_tile_1 = pygame.image.load("data/images/blue_tile_1.png")
@@ -231,6 +275,8 @@ def gameplay(display, init_player_x = 100, init_player_y = 100):
 
     h_bar_image = pygame.image.load("data/images/blue_tile_3.png")
     h_bar_image = pygame.transform.scale(h_bar_image, (TILE_SIZE, TILE_SIZE))
+    villain_h_bar_image = pygame.image.load("data/images/villain_heart.png")
+    villain_h_bar_image = pygame.transform.scale(villain_h_bar_image, (TILE_SIZE, TILE_SIZE))
 
     blue_coin_count = pygame.image.load("data/images/blue_coin_count.png")
     blue_coin_count = pygame.transform.scale(blue_coin_count, (TILE_SIZE, TILE_SIZE))
@@ -247,14 +293,26 @@ def gameplay(display, init_player_x = 100, init_player_y = 100):
 
     jump_sound = pygame.mixer.Sound("data/audio/jump.wav")
     hurt_sound = pygame.mixer.Sound("data/audio/hurt.wav")
+    villain_dash_sound = pygame.mixer.Sound("data/audio/villain_dash.wav")
     pickup_sound = pygame.mixer.Sound("data/audio/coin_pickup.wav")
     jump_sound.set_volume(0.5)
     hurt_sound.set_volume(0.3)
 
-    game_map = load_map('data/maps/01')
+    game_map = load_map('data/maps/02')
     e.load_animations('data/images/entities/')
 
     player = e.entity(init_player_x, init_player_y, 32, 32, 'player')
+    villain = {
+        'entity': e.entity(500, 500, 64, 64, 'villain'),
+        'movement': [0,0],
+        'y_momentum': 0,
+        'dash_timer': 0,
+        'collision_types': {},
+        'hurt': True,
+        'no_hurt_timer': 0,
+        'health': 5,
+        'hurt_sound': pygame.mixer.Sound('data/audio/villain_hurt.wav')
+    }
 
     anti_blue_coords = [(450,200), (800,200), (1000,250)]
     anti_blue_list = [e.entity(x[0], x[1], 51, 58, 'anti_blue') for x in anti_blue_coords]
@@ -286,9 +344,11 @@ def gameplay(display, init_player_x = 100, init_player_y = 100):
 
         for h_bar in range(player_health):
             display.blit(h_bar_image, (10 + 23*h_bar, 10))
+        for h_bar in range(villain['health']):
+            display.blit(villain_h_bar_image, (500 + 23*h_bar, 10))
 
         display.blit(blue_coin_count, (250, 10))
-        display.blit(my_font.render('x ' + str(coins_collected), False, (1,146,240)), (290, 30))
+        display.blit(small_font.render(f'x {coins_collected}', False, (1,146,240)), (290, 25))
 
         # Setting speed according to key presses
         player_movement = [0,0]
@@ -302,7 +362,60 @@ def gameplay(display, init_player_x = 100, init_player_y = 100):
         player_movement[1] += player_y_momentum
         player_y_momentum += 0.2
         no_hurt_timer -= 0.2
+
+        villain['dash_timer'] += 0.1
+        villain['no_hurt_timer'] -=0.2
+
+        if villain["dash_timer"] < 1:
+            if villain['entity'].x > player.x + 2:
+                villain['move_direction'] = 'left'
+            else:
+                villain['move_direction'] = 'right'
+
+        if villain["move_direction"] == 'left':
+            if villain['dash_timer'] > 15:
+                villain['movement'][0] = 0
+                villain["dash_timer"] = 0
+
+            elif villain['dash_timer'] > 10:
+                villain['movement'][0] = -10
+            
+            elif villain['dash_timer'] > 7:
+                villain['movement'][0] = -3
+            
+            elif villain['dash_timer'] > 5:
+                villain['movement'][0] = 0
+
+        if villain["move_direction"] == 'right':
+            if villain['dash_timer'] > 15:
+                villain['movement'][0] = 0
+                villain["dash_timer"] = 0
+
+            elif villain['dash_timer'] > 10:
+                villain['movement'][0] = 10
+            
+            elif villain['dash_timer'] > 7:
+                villain['movement'][0] = 3
+            
+            elif villain['dash_timer'] > 5:
+                villain['movement'][0] = 0
         
+        villain['movement'][1] += villain['y_momentum']
+        villain['y_momentum'] += 0.2
+        villain['collision_types'] = villain['entity'].move(villain['movement'], tile_rects)
+        if villain['collision_types']['bottom']:
+            villain['y_momentum'] = 0
+        if villain['y_momentum'] > 10:
+            villain['y_momentum'] = 10
+        
+        if villain['no_hurt_timer'] < 0:
+            villain['no_hurt_timer'] = 0
+        if villain['no_hurt_timer'] == 0:
+            villain['hurt'] = False
+        if villain['hurt'] == False:
+            villain['entity'].set_action("idle")
+
+
         if no_hurt_timer < 0:
             no_hurt_timer = 0
         if player_y_momentum > 5:
@@ -310,18 +423,49 @@ def gameplay(display, init_player_x = 100, init_player_y = 100):
         if e.collision_test(player, [x.rect() for x in anti_blue_list]) and no_hurt_timer == 0:
             no_hurt_timer = 10
             hurt = True
-            hurt_sound.play(loops=3, fade_ms=5)
+            hurt_sound.play()
             player_health -= 1
+        if e.collision_test(player, [villain['entity'].rect()]) and no_hurt_timer == 0:
+
+            if player.y + 16 < villain['entity'].y and villain['no_hurt_timer'] == 0:
+                no_hurt_timer = 10
+                coins_collected +=1
+                pickup_sound.play()
+
+                villain['no_hurt_timer'] = 10
+                villain['hurt'] = True
+                villain['hurt_sound'].play()
+                villain['health'] -= 1
+
+                if villain['hurt'] and villain['movement'][0] > 0:
+                    villain['entity'].set_action('hurt')
+                    villain['entity'].set_flip(False)
+                elif villain['hurt'] and villain['movement'][0] > 0:
+                    villain['entity'].set_action('hurt')
+                    villain['entity'].set_flip(True)
+                elif villain['hurt'] and villain['movement'][0] == 0:
+                    villain['entity'].set_action('hurt')
+            else:            
+                no_hurt_timer = 10
+                hurt = True
+                hurt_sound.play()
+                player_health -= 1
             
+            if villain['health'] <= 0:
+                # You win
+                pass
+
+            if villain['health'] <= 0:
+                return 3, coins_collected
             if player_health <= 0:
-                return 2
-        elif true_scroll[1] > 200 and no_hurt_timer == 0:
+                return 2, coins_collected
+        elif true_scroll[1] > 800 and no_hurt_timer == 0:
             no_hurt_timer = 10
             hurt = True
-            hurt_sound.play(loops=3, fade_ms=5)
+            hurt_sound.play()
             player_health -= 2
             if player_health <= 0:
-                return 2
+                return 2, coins_collected
         elif no_hurt_timer == 0:
             hurt = False
         
@@ -368,6 +512,9 @@ def gameplay(display, init_player_x = 100, init_player_y = 100):
 
         player.change_frame(1)
         player.display(display, scroll)
+
+        villain['entity'].change_frame(1)
+        villain['entity'].display(display, scroll)
         
         for x in anti_blue_list:
             x.change_frame(1)
@@ -397,7 +544,7 @@ def gameplay(display, init_player_x = 100, init_player_y = 100):
                     pygame.mixer.music.set_volume(0.3)
                     pause_ret = pause()
                     if pause_ret == 1:
-                        return 1
+                        return 1, coins_collected
 
                     pygame.mixer.music.set_volume(1)
             
@@ -421,9 +568,11 @@ menu()
 pygame.mixer.music.play(-1)
 
 while True:
-    return_val = gameplay(display)
+    return_val, coins_collected = gameplay(display)
     if return_val == 2:
-        return_val = lose()
+        return_val = lose(coins_collected)
+    if return_val == 3:
+        return_val = win(coins_collected)
     if return_val != 1:
         break
 
