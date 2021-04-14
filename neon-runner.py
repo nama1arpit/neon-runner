@@ -2,7 +2,7 @@ import pygame, sys, random
 from pygame.locals import *
 import data.engine as e
 
-pygame.mixer.pre_init(44100, -16, 2, 200)
+pygame.mixer.pre_init(44100, -16, 2, 100)
 pygame.init()
 pygame.mixer.set_num_channels(64)
 e.set_global_colorkey((0,0,0))
@@ -12,6 +12,7 @@ pygame.display.set_caption("Neon-Runner")
 title_font = pygame.font.Font("data/font/Hippauf-G01O.ttf", 40)
 subtitle_font = pygame.font.Font("data/font/Hippauf-G01O.ttf", 25)
 small_font = pygame.font.Font("data/font/Hippauf-G01O.ttf", 20)
+smaller_font = pygame.font.Font("data/font/Hippauf-G01O.ttf", 15)
 
 WINDOW_SIZE = (1200, 800)
 screen = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
@@ -158,6 +159,9 @@ def lose(coins_collected):
     arrow_position = 0
 
     menu_arrow_sound = pygame.mixer.Sound("data/audio/menu_arrow.wav")
+    lose_music = pygame.mixer.Sound("data/audio/lose_music.wav")
+    # lose_music.set_volume(0.5)
+    lose_music.play(-1)
 
     score = coins_collected*20
 
@@ -191,6 +195,7 @@ def lose(coins_collected):
                         sys.exit()
                     elif arrow_position == 0:
                         running = False
+                        lose_music.stop()
                         return 1
             if event.type == KEYUP:
                 pass
@@ -199,6 +204,7 @@ def lose(coins_collected):
         screen.blit(surf, (0,0))
         pygame.display.update()
         clock.tick(60)
+    lose_music.stop()
 
 def win(coins_collected):
     running = True
@@ -207,6 +213,9 @@ def win(coins_collected):
     arrow_position = 0
 
     menu_arrow_sound = pygame.mixer.Sound("data/audio/menu_arrow.wav")
+    win_music = pygame.mixer.Sound("data/audio/win_music.wav")
+    # win_music.set_volume()
+    win_music.play(-1)
 
     score = coins_collected*20
 
@@ -240,6 +249,7 @@ def win(coins_collected):
                         sys.exit()
                     elif arrow_position == 0:
                         running = False
+                        win_music.stop()
                         return 1
             if event.type == KEYUP:
                 pass
@@ -248,6 +258,7 @@ def win(coins_collected):
         screen.blit(surf, (0,0))
         pygame.display.update()
         clock.tick(60)
+    win_music.stop()
 
 def get_coordinates_from_map(game_map, tile_id, tile_size):
     
@@ -260,8 +271,7 @@ def get_coordinates_from_map(game_map, tile_id, tile_size):
     return coord_list
 
 
-def gameplay(display, init_player_x = 100, init_player_y = 400):
-    
+def gameplay(display, init_player_x = 1500, init_player_y = 200):
 
     moving_right = False
     moving_left = False
@@ -275,6 +285,7 @@ def gameplay(display, init_player_x = 100, init_player_y = 400):
     player_health = 5
     coins_collected = 0
     bolts_collected = 0
+    boss_started = False
 
     screen_shake = 0
     true_scroll = [0,0]
@@ -290,7 +301,7 @@ def gameplay(display, init_player_x = 100, init_player_y = 400):
     h_bar_image = pygame.image.load("data/images/blue_tile_3.png")
     h_bar_image = pygame.transform.scale(h_bar_image, (TILE_SIZE, TILE_SIZE))
     villain_h_bar_image = pygame.image.load("data/images/villain_heart.png")
-    villain_h_bar_image = pygame.transform.scale(villain_h_bar_image, (TILE_SIZE, TILE_SIZE))
+    villain_h_bar_image = pygame.transform.scale(villain_h_bar_image, (TILE_SIZE//2, TILE_SIZE//2))
 
     blue_coin_count = pygame.image.load("data/images/blue_coin_count.png")
     blue_coin_count = pygame.transform.scale(blue_coin_count, (TILE_SIZE, TILE_SIZE))
@@ -314,15 +325,19 @@ def gameplay(display, init_player_x = 100, init_player_y = 400):
     hurt_sound = pygame.mixer.Sound("data/audio/hurt.wav")
     villain_dash_sound = pygame.mixer.Sound("data/audio/villain_dash.wav")
     pickup_sound = pygame.mixer.Sound("data/audio/coin_pickup.wav")
-    jump_sound.set_volume(0.5)
+    bolt_pickup_sound = pygame.mixer.Sound("data/audio/bolt_pickup.wav")
+    boss_music = pygame.mixer.Sound("data/audio/boss_music.wav")
+    dash_sound = pygame.mixer.Sound("data/audio/player_dash.wav")
+    jump_sound.set_volume(0.3)
     hurt_sound.set_volume(0.3)
+
 
     game_map = load_map('data/maps/level1')
     e.load_animations('data/images/entities/')
 
     player = e.entity(init_player_x, init_player_y, 32, 32, 'player')
     villain = {
-        'entity': e.entity(500, 500, 64, 64, 'villain'),
+        'entity': e.entity(2500, 400, 64, 64, 'villain'),
         'movement': [0,0],
         'y_momentum': 0,
         'dash_timer': 0,
@@ -331,7 +346,8 @@ def gameplay(display, init_player_x = 100, init_player_y = 400):
         'no_hurt_timer': 0,
         'health': 5,
         'hurt_sound': pygame.mixer.Sound('data/audio/villain_hurt.wav'),
-        'dash_move': 0
+        'dash_move': 0,
+        'jump': False
     }
 
     anti_blue_coords = [(450,200), (800,200), (1000,250)]
@@ -339,7 +355,7 @@ def gameplay(display, init_player_x = 100, init_player_y = 400):
     anti_blue_list = []
 
     blue_coin_coords = get_coordinates_from_map(game_map, 7, TILE_SIZE) #[(1400, 350)]
-    print(blue_coin_coords)
+    blue_coin_coords = [(x, y+8) for (x,y) in blue_coin_coords]
     blue_coin_list = [e.entity(x[0], x[1], 51, 58, 'blue_coin') for x in blue_coin_coords]
 
     blue_bolt_coords = get_coordinates_from_map(game_map, 8, TILE_SIZE) #[(300, 400), (600, 650)]
@@ -367,6 +383,12 @@ def gameplay(display, init_player_x = 100, init_player_y = 400):
 
         tile_rects = []
 
+        if player.x > 2100 and boss_started == False:
+            pygame.mixer.music.stop()
+            boss_music.set_volume(0.5)
+            boss_music.play()
+            boss_started = True
+
         for y, row in enumerate(game_map):
             for x, tile_code in enumerate(row):
                 if int(tile_code) not in [-1, 1, 4, 7, 8]:
@@ -377,8 +399,10 @@ def gameplay(display, init_player_x = 100, init_player_y = 400):
 
         for h_bar in range(player_health):
             display.blit(h_bar_image, (10 + 23*h_bar, 10))
-        for h_bar in range(villain['health']):
-            display.blit(villain_h_bar_image, (500 + 23*h_bar, 10))
+        # for h_bar in range(villain['health']):
+        #     display.blit(villain_h_bar_image, (500 + 23*h_bar, 10))
+        display.blit(villain_h_bar_image, (villain['entity'].x - scroll[0], villain['entity'].y - scroll[1] - 15))
+        display.blit(smaller_font.render(f'{villain["health"]}', False, (1, 146, 240)), (villain['entity'].x - scroll[0] + 30, villain['entity'].y - scroll[1] - 15))
 
         display.blit(blue_coin_count, (200, 10))
         display.blit(small_font.render(f'x {coins_collected}', False, (1,146,240)), (240, 25))
@@ -403,6 +427,8 @@ def gameplay(display, init_player_x = 100, init_player_y = 400):
         villain['dash_timer'] += 0.1
         villain['no_hurt_timer'] -=0.2
 
+        
+
         if villain["dash_timer"] < 1:
             if villain['entity'].x > player.x + 2:
                 villain['move_direction'] = 'left'
@@ -414,11 +440,15 @@ def gameplay(display, init_player_x = 100, init_player_y = 400):
             if villain['dash_timer'] > 10:
                 villain['movement'][0] = 0
                 villain["dash_timer"] = 0
+                villain['jump'] = True
 
             elif villain['dash_timer'] > 8:
                 villain['movement'][0] = -18 #speed
             elif villain['dash_timer'] > 6:
                 villain['movement'][0] = -3
+                if villain['jump']:
+                    villain['y_momentum'] = -2
+                    villain['jump'] = False
             
             elif villain['dash_timer'] > 3:
                 villain['movement'][0] = 0
@@ -427,23 +457,36 @@ def gameplay(display, init_player_x = 100, init_player_y = 400):
             if villain['dash_timer'] > 10:
                 villain['movement'][0] = 0
                 villain["dash_timer"] = 0
+                villain['jump'] = True
 
             elif villain['dash_timer'] > 8:
                 villain['movement'][0] = 18
             
             elif villain['dash_timer'] > 6:
                 villain['movement'][0] = 3
+                if villain['jump']:
+                    villain['y_momentum'] = -2
+                    villain['jump'] = False
             
             elif villain['dash_timer'] > 3:
                 villain['movement'][0] = 0
-        
+
+        # if random.randint(0,100) == 0:
+        #     villain['y_momentum'] = -1.8
+
         villain['movement'][1] += villain['y_momentum']
+        print(villain['movement'], villain['y_momentum'])
         villain['y_momentum'] += 0.2
         villain['collision_types'] = villain['entity'].move(villain['movement'], tile_rects)
         if villain['collision_types']['bottom']:
             villain['y_momentum'] = 0
-        if villain['y_momentum'] > 10:
-            villain['y_momentum'] = 10
+            villain['movement'][1] = 0
+            # pass
+        if villain['collision_types']['top']:
+            villain['y_momentum'] = 1
+            # pass
+        if villain['y_momentum'] > 5:
+            villain['y_momentum'] = 5
         
         if villain['no_hurt_timer'] < 0:
             villain['no_hurt_timer'] = 0
@@ -497,8 +540,10 @@ def gameplay(display, init_player_x = 100, init_player_y = 400):
                 pass
 
             if villain['health'] <= 0:
+                boss_music.stop()
                 return 3, coins_collected
             if player_health <= 0:
+                boss_music.stop()
                 return 2, coins_collected
         elif true_scroll[1] > 800 and no_hurt_timer == 0:
             no_hurt_timer = 10
@@ -518,7 +563,7 @@ def gameplay(display, init_player_x = 100, init_player_y = 400):
 
         for bolt in blue_bolt_list:
             if e.collision_test(player, [bolt.rect()]) and bolt.action == 'idle':
-                pickup_sound.play()
+                bolt_pickup_sound.play()
                 bolt.set_action('active')
                 bolts_collected += 1
 
@@ -593,9 +638,14 @@ def gameplay(display, init_player_x = 100, init_player_y = 400):
                 if event.key == K_LSHIFT and dash_timer == 0:
                     if bolts_collected > 0:
                         moving_fast = True
+                        dash_sound.set_volume(0.4)
+                        dash_sound.play()
                         dash_timer = 15
                         bolts_collected -= 1
                         screen_shake = 150
+
+                # if event.key == K_k:
+                #     villain['y_momentum'] = -1.5
                 if event.key == K_ESCAPE:
                     pygame.mixer.music.set_volume(0.3)
                     pause_ret = pause()
@@ -619,9 +669,10 @@ def gameplay(display, init_player_x = 100, init_player_y = 400):
 
 menu()
 
-pygame.mixer.music.play(-1)
+
 
 while True:
+    pygame.mixer.music.play(-1)
     return_val, coins_collected = gameplay(display)
     if return_val == 2:
         return_val = lose(coins_collected)
