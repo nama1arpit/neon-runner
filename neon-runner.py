@@ -271,7 +271,7 @@ def get_coordinates_from_map(game_map, tile_id, tile_size):
     return coord_list
 
 
-def gameplay(display, init_player_x = 1500, init_player_y = 200):
+def gameplay(display, init_player_x = 2000, init_player_y = 200):
 
     moving_right = False
     moving_left = False
@@ -347,7 +347,8 @@ def gameplay(display, init_player_x = 1500, init_player_y = 200):
         'health': 5,
         'hurt_sound': pygame.mixer.Sound('data/audio/villain_hurt.wav'),
         'dash_move': 0,
-        'jump': False
+        'jump': False,
+        'move_direction': ''
     }
 
     anti_blue_coords = [(450,200), (800,200), (1000,250)]
@@ -383,7 +384,7 @@ def gameplay(display, init_player_x = 1500, init_player_y = 200):
 
         tile_rects = []
 
-        if player.x > 2100 and boss_started == False:
+        if player.x > 2150 and boss_started == False:
             pygame.mixer.music.stop()
             boss_music.set_volume(0.5)
             boss_music.play()
@@ -402,7 +403,7 @@ def gameplay(display, init_player_x = 1500, init_player_y = 200):
         # for h_bar in range(villain['health']):
         #     display.blit(villain_h_bar_image, (500 + 23*h_bar, 10))
         display.blit(villain_h_bar_image, (villain['entity'].x - scroll[0], villain['entity'].y - scroll[1] - 15))
-        display.blit(smaller_font.render(f'{villain["health"]}', False, (1, 146, 240)), (villain['entity'].x - scroll[0] + 30, villain['entity'].y - scroll[1] - 15))
+        display.blit(smaller_font.render(f'{villain["health"]}', False, (248, 64, 78)), (villain['entity'].x - scroll[0] + 30, villain['entity'].y - scroll[1] - 15))
 
         display.blit(blue_coin_count, (200, 10))
         display.blit(small_font.render(f'x {coins_collected}', False, (1,146,240)), (240, 25))
@@ -427,7 +428,6 @@ def gameplay(display, init_player_x = 1500, init_player_y = 200):
         villain['dash_timer'] += 0.1
         villain['no_hurt_timer'] -=0.2
 
-        
 
         if villain["dash_timer"] < 1:
             if villain['entity'].x > player.x + 2:
@@ -436,7 +436,7 @@ def gameplay(display, init_player_x = 1500, init_player_y = 200):
                 villain['move_direction'] = 'right'
             villain['dash_move'] = abs(villain['entity'].x - player.x - 2)
 
-        if villain["move_direction"] == 'left':
+        if villain["move_direction"] == 'left' and player.x > 2100:
             if villain['dash_timer'] > 10:
                 villain['movement'][0] = 0
                 villain["dash_timer"] = 0
@@ -444,16 +444,23 @@ def gameplay(display, init_player_x = 1500, init_player_y = 200):
 
             elif villain['dash_timer'] > 8:
                 villain['movement'][0] = -18 #speed
-            elif villain['dash_timer'] > 6:
-                villain['movement'][0] = -3
                 if villain['jump']:
-                    villain['y_momentum'] = -2
+                    villain['y_momentum'] = -1.8
+                    villain['jump'] = False
+
+            elif villain['dash_timer'] > 7:
+                villain['jump'] = True
+
+            elif villain['dash_timer'] > 3:
+                villain['movement'][0] = -5
+                if villain['jump']:
+                    villain['y_momentum'] = -1.8
                     villain['jump'] = False
             
-            elif villain['dash_timer'] > 3:
+            elif villain['dash_timer'] > 1:
                 villain['movement'][0] = 0
 
-        if villain["move_direction"] == 'right':
+        if villain["move_direction"] == 'right' and player.x > 2100:
             if villain['dash_timer'] > 10:
                 villain['movement'][0] = 0
                 villain["dash_timer"] = 0
@@ -461,21 +468,27 @@ def gameplay(display, init_player_x = 1500, init_player_y = 200):
 
             elif villain['dash_timer'] > 8:
                 villain['movement'][0] = 18
-            
-            elif villain['dash_timer'] > 6:
-                villain['movement'][0] = 3
                 if villain['jump']:
-                    villain['y_momentum'] = -2
+                    villain['y_momentum'] = -1.8
                     villain['jump'] = False
+
+            elif villain['dash_timer'] > 7:
+                villain['jump'] = True
             
             elif villain['dash_timer'] > 3:
+                villain['movement'][0] = 5
+                if villain['jump']:
+                    villain['y_momentum'] = -1.8
+                    villain['jump'] = False
+            
+            elif villain['dash_timer'] > 1:
                 villain['movement'][0] = 0
 
         # if random.randint(0,100) == 0:
         #     villain['y_momentum'] = -1.8
 
         villain['movement'][1] += villain['y_momentum']
-        print(villain['movement'], villain['y_momentum'])
+
         villain['y_momentum'] += 0.2
         villain['collision_types'] = villain['entity'].move(villain['movement'], tile_rects)
         if villain['collision_types']['bottom']:
@@ -483,7 +496,7 @@ def gameplay(display, init_player_x = 1500, init_player_y = 200):
             villain['movement'][1] = 0
             # pass
         if villain['collision_types']['top']:
-            villain['y_momentum'] = 1
+            villain['y_momentum'] = 5
             # pass
         if villain['y_momentum'] > 5:
             villain['y_momentum'] = 5
@@ -510,8 +523,9 @@ def gameplay(display, init_player_x = 1500, init_player_y = 200):
             hurt_sound.play()
             player_health -= 1
         if e.collision_test(player, [villain['entity'].rect()]) and no_hurt_timer == 0:
-
+            
             if player.y + 16 < villain['entity'].y and villain['no_hurt_timer'] == 0:
+                player_y_momentum = -5
                 no_hurt_timer = 10
                 coins_collected +=1
                 pickup_sound.play()
