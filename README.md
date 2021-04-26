@@ -18,6 +18,18 @@ Currently, there is just a single boss fight. There are two pickup items:
 - Space: Jump
 - Shift: Activate lightning fast speed
 
+## Directions to Run
+
+### Linux
+
+- Extract the .zip file and run the following commands:
+  - `chmod u+x neon-runner` (Need to run only once)
+  - `./neon-runner`
+
+### Windows
+
+- I am working to add the windows executable
+
 ## Credits
 
 - main music: Music by <a href="/users/zen_man-4257870/?tab=audio&amp;utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=audio&amp;utm_content=2691">Zen_Man</a> from <a href="https://pixabay.com/music/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=music&amp;utm_content=2691">Pixabay</a>
