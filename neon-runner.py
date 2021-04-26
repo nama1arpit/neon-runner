@@ -271,7 +271,7 @@ def get_coordinates_from_map(game_map, tile_id, tile_size):
     return coord_list
 
 
-def gameplay(display, init_player_x = 2000, init_player_y = 200):
+def gameplay(display, init_player_x = 100, init_player_y = 200):
 
     moving_right = False
     moving_left = False

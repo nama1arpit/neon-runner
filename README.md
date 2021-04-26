@@ -1,12 +1,22 @@
 # Neon Runner
-A neon styled retro platformer game made completely with pygame.
+A neon styled retro platformer game made completely with pygame. Get ready for some nostalgia!
 
 ## Gameplay
+
+Currently, there is just a single boss fight. There are two pickup items:
+
+1. Coin: Adds up to the player score
+2. Lightning: Allows the player to activate lightning fast speed for a few seconds
 
 ![boss-test2-gameplay](https://user-images.githubusercontent.com/36475839/114767214-fe24ca80-9d84-11eb-8864-75d9f150bd1d.gif)
 
 ![boss-test2-gameplay1](https://user-images.githubusercontent.com/36475839/114767236-03821500-9d85-11eb-9be0-9ce831a8b2a0.gif)
 
+## Controls
+
+- Left and Right Arrows: Movement
+- Space: Jump
+- Shift: Activate lightning fast speed
 
 ## Credits
 
