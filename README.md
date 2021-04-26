@@ -22,7 +22,7 @@ Currently, there is just a single boss fight. There are two pickup items:
 
 ### Linux
 
-- Extract the .zip file and run the following commands:
+- Extract the .zip file [here](https://github.com/nama1arpit/neon-runner/releases/download/1.0.0/neon-runner.zip) and run the following commands:
   - `chmod u+x neon-runner` (Need to run only once)
   - `./neon-runner`
 
